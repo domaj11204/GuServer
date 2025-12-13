@@ -1,0 +1,41 @@
+name: Deploy to Termux
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: 100.78.115.6 # 手機在 Tailscale 的 IP
+          username: u0_a808 
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 8022
+          script: |
+            # 確保目標目錄正確，這裡是假設為 ~/GuServer
+            cd ~/GuServer
+            git pull origin main
+            
+            # 使用 uv 同步依賴
+            uv sync
+            
+            # 重啟服務
+            # 先嘗試停止舊的 process
+            pkill -f "uvicorn main:app" || true
+            
+            # 啟動新的 process (使用 nohup 讓它在背景執行)
+            # 使用 uv run 來確保使用正確的環境
+            nohup uv run python -m uvicorn main:app --host 0.0.0.0 --port 7979 > output.log 2>&1 &
