@@ -28,8 +28,20 @@ class Task(Base):
 
     children = relationship("Task", backref="parent", remote_side=[id])
 
+class GameEvent(Base):
+    __tablename__ = "game_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime, default=datetime.now)
+    event_type = Column(String, index=True)
+    payload = Column(JSON)
+
 # Pydantic Model (API Schema)
 class ChatMessageCreate(BaseModel):
     sender: str
     message: str
     chat_type: str
+
+class GameEventCreate(BaseModel):
+    event_type: str
+    payload: Dict[str, Any]
