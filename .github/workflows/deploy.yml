@@ -30,12 +30,14 @@ jobs:
             git pull origin main
             
             # 使用 uv 同步依賴
-            uv sync
+            # 需要更新依賴再打開註解，不然會有pydantic重編譯問題
+            # uv sync
             
             # 重啟服務
             # 先嘗試停止舊的 process
-            pkill -f "uvicorn main:app" || true
+            pkill -f "uv run --no-sync -m uvicorn main:app --host 0.0.0.0 --port 7979"
             
             # 啟動新的 process (使用 nohup 讓它在背景執行)
             # 使用 uv run 來確保使用正確的環境
-            nohup uv run python -m uvicorn main:app --host 0.0.0.0 --port 7979 > output.log 2>&1 &
+            # 加上no-sync來避免依賴檢查
+              nohup uv run --no-sync -m uvicorn main:app --host 0.0.0.0 --port 7979 > output.log 2>&1 &
